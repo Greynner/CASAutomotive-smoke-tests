@@ -10,9 +10,9 @@ He completado la evaluación del marketplace dentro del alcance de pruebas docum
 - Informe ejecutivo: https://github.com/Greynner/CASAutomotive-smoke-tests/blob/main/docs/final-report.md
 - Hallazgos y reproducción: https://github.com/Greynner/CASAutomotive-smoke-tests/issues
 
-La entrega incluye 11 defectos priorizados y reproducibles, una suite Playwright/TypeScript de 67 ejecuciones públicas en distintos navegadores y perfiles móviles, y un journey autenticado adicional con datos sintéticos. Los hallazgos de mayor impacto afectan al borrado de cuenta, la exportación de datos, el consentimiento de marketing y los cálculos de precios e impuestos.
+La entrega incluye 14 hallazgos priorizados y reproducibles, una suite Playwright/TypeScript de 132 ejecuciones públicas en distintos navegadores y perfiles móviles, y dos journeys autenticados adicionales con datos sintéticos. Se amplió búsqueda/catálogo, validación cliente de registro, acceso sin sesión, perfil, preferencias y cupones, además de un smoke automatizado de accesibilidad y una línea base de navegación. Los hallazgos de mayor impacto afectan al borrado de cuenta, la exportación de datos, el consentimiento de marketing y los cálculos de precios e impuestos.
 
-También documento el alcance, las evidencias, los resultados intermitentes y las limitaciones de cobertura. No realicé pagos ni pedidos. No recomiendo un lanzamiento sin resolver o aceptar explícitamente los riesgos altos y completar los escenarios pendientes. La revisión de privacidad detectó discrepancias; no constituye una certificación de cumplimiento RGPD.
+También documento el alcance, las evidencias, los resultados intermitentes y las limitaciones de cobertura. No realicé pagos ni pedidos. No recomiendo un lanzamiento sin resolver o aceptar explícitamente los riesgos altos y completar los escenarios pendientes. **Se realizó un smoke técnico de privacidad** sobre cookies/tráfico, consentimiento, rectificación, exportación y borrado. Detectó discrepancias; **no se validó cumplimiento integral del RGPD ni se prestó asesoría jurídica**. El alcance y las limitaciones se detallan en el informe.
 
 El repositorio es privado. Puedo habilitar acceso a la cuenta de GitHub que me indiquen.
 

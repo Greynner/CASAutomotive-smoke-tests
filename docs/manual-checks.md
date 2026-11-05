@@ -28,8 +28,18 @@ La ausencia de outline, por sí sola, no se registró como defecto: se observó 
 bunx playwright test --project=frontend-chromium --grep '@accessibility'
 ```
 
+## Ampliación automática axe
+
+Se añadió `@axe-core/playwright` 4.14.0 con reglas WCAG 2 A/AA y 2.1 A/AA, sin excluir reglas. Cinco páginas × tres motores detectaron `color-contrast` (CAS-014 / issue #14), agrupado como un patrón compartido. Ejemplos de home: texto blanco sobre `#009966`, 3.65:1 frente a 4.5:1 requerido en “Start shopping” y “Accept all”. Se guardan solo reglas, selectores e impactos en adjuntos sanitizados; los resultados incompletos requieren revisión humana.
+
+```bash
+bunx playwright test --project=frontend-chromium --grep 'automated accessibility'
+```
+
+No se confunde un scan automático con una auditoría completa o aprobación WCAG.
+
 ## No evaluado / no aprobado
 
-- Lector de pantalla real, contraste medido, zoom/reflow al 200–400%, navegación de teclado exhaustiva y validación integral WCAG.
+- Lector de pantalla real, contraste de todos los estados con revisión humana, zoom/reflow al 200–400%, navegación de teclado exhaustiva y validación integral WCAG.
 - Dispositivos físicos, más breakpoints, localización e interacción con pedidos/vendedor.
 - No afirmar “accesibilidad aprobada” o “responsive completo” a partir de esta muestra.

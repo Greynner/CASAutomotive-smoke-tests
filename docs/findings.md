@@ -12,7 +12,7 @@
 
 Evidencia local: `playwright-report/index.html`, `test-results/results.json` y carpetas de cada test fallido (captura, vídeo, trace para UI). No versionados por privacidad. El catálogo es compartido y puede cambiar; conservar fecha y evidencia de la ejecución, no asumir datos inmutables.
 
-Las prioridades son propuestas. Ninguna causa raíz está confirmada: solo se observó la aplicación desplegada. Los once hallazgos se publicaron como [issues #1–#11](https://github.com/Greynner/CASAutomotive-smoke-tests/issues); el número de issue coincide con el sufijo CAS. No se publicaron artefactos ni credenciales.
+Las prioridades son propuestas. Ninguna causa raíz está confirmada: solo se observó la aplicación desplegada. Los catorce hallazgos se publicaron como [issues #1–#14](https://github.com/Greynner/CASAutomotive-smoke-tests/issues); el número de issue coincide con el sufijo CAS. No se publicaron artefactos ni credenciales.
 
 ### Ampliación autenticada
 
@@ -36,6 +36,16 @@ Las prioridades son propuestas. Ninguna causa raíz está confirmada: solo se ob
 - CAS-011 se reprodujo automáticamente en Chromium, Firefox y WebKit. El journey autenticado permanece opt-in y conserva su validación final de 01:13 UTC; no se volvieron a crear cuentas ni enviar mutaciones durante este cierre.
 - El reporte público local fue reemplazado por esta última ejecución; los resultados iniciales se mantienen aquí como registro histórico.
 
+### Ampliación técnica final
+
+- Matriz pública ampliada: **2026-11-05 01:52 UTC**, 412.6 s, **132 ejecuciones: 90 correctas y 42 fallidas**. De los fallos, 40 corresponden a nueve discrepancias públicas; dos fueron intermitentes de navegación (carrito invitado Firefox y CTA WebKit).
+- Repetición de esos dos escenarios en los tres motores, dos veces cada uno: **12/12 correctas**. Se conserva el resultado intermitente original, sin afirmar que la estabilidad esté resuelta.
+- Proyectos autenticados: **2026-11-05 02:09 UTC**, 285.0 s, dos journeys completados y fallidos por cinco discrepancias conocidas: CAS-007–CAS-010 y CAS-013. Se verificaron perfil/exportación corregidos, preferencia de marketing on→off, cupones y limpieza. No se crearon cuentas adicionales ni pedidos.
+- Durante la ampliación se identificaron acciones antes de hidratación y esperas `load` poco apropiadas en pruebas autenticadas. Se añadió un marcador observable de montaje cliente (banner en contextos que no eligen consentimiento). La ejecución final completó ambos journeys sin esos timeouts. El oráculo de borrado es el rechazo de credenciales desde sesión limpia, no una redirección visual.
+- **Smoke técnico de privacidad, no validación RGPD ni asesoría jurídica:** 9 escenarios (sin elección/rechazar/aceptar × 3 motores), sin trackers reconocibles en las rutas muestreadas. Ver [privacy-smoke.md](privacy-smoke.md) para lo observado y los límites.
+- Axe en cinco páginas × tres motores reprodujo únicamente `color-contrast` entre las reglas seleccionadas (15 ejecuciones fallidas agrupadas en CAS-014). No es una auditoría WCAG completa.
+- Registro negativo: 15 ejecuciones correctas con backend bloqueado por seguridad. Comprueba campos vacíos/acuerdo/confirmación, no demuestra validación de fuerza de contraseña o email en servidor. Las exploraciones de entradas no vacías débiles o malformadas se enviaban a backend; al bloquear ese envío no puede concluirse si el servidor las rechaza. No se reportó como bug confirmado.
+
 ## Resumen priorizado
 
 | ID      | Prioridad | Discrepancia                                            | Impacto                                              |
@@ -51,6 +61,9 @@ Las prioridades son propuestas. Ninguna causa raíz está confirmada: solo se ob
 | CAS-009 | P1 alta   | Exportación omite una dirección guardada                | Datos de acceso/portabilidad incompletos             |
 | CAS-010 | P1 alta   | Impuesto calculado antes del descuento                  | Total estimado incorrecto en carrito y checkout      |
 | CAS-011 | P2 media  | Umbrales de estrellas sin nombre accesible distinguible | Dificulta el uso con lector de pantalla              |
+| CAS-012 | P2 media  | Precio máximo excluye el límite exacto                  | Omite productos dentro del presupuesto               |
+| CAS-013 | P1 alta   | SAVE20 persiste por debajo de su mínimo                 | Cupón activo sin cumplir elegibilidad                |
+| CAS-014 | P2 media  | Contraste insuficiente en controles compartidos         | Dificulta lectura con baja visión                    |
 
 ## CAS-001 · Marketing premarcado
 
@@ -231,6 +244,46 @@ Test: `tests/ui/catalog.spec.ts`. Evidencia: arrays de centavos recibidos frente
 **Impacto:** un usuario de lector de pantalla no puede elegir el umbral por el nombre del control. Confirmado en inspección de árbol accesible de escritorio/móvil y test en los tres motores; no es una auditoría WCAG completa.
 
 **Reproducción:** `bunx playwright test --project=frontend-chromium --grep '@accessibility'`. Test: `tests/ui/accessibility.spec.ts`. Detalle de muestra y límites: [manual-checks.md](manual-checks.md).
+
+## CAS-012 · Precio máximo excluye el valor exacto seleccionado · P2 media
+
+1. Abrir `/products?min=50&max=51`: Pour-Over Coffee Set (`p108`, $50.00) está presente.
+2. Abrir `/products?min=50&max=50` o `/products?min=49&max=50`.
+
+**Esperado:** un máximo de $50 incluye el producto de $50. La expectativa interpreta “Maximum price” como límite inclusivo; confirmar esta interpretación con producto si el requisito interno difiere.
+
+**Actual:** desaparece el producto de $50; el intervalo 50–50 no devuelve resultados. Reproducido dos veces en exploración y en tres motores en la suite.
+
+**Impacto:** el filtro omite productos dentro del presupuesto indicado.
+
+**Reproducción:** `bunx playwright test --project=frontend-chromium --grep 'maximum price'`. Test: `tests/ui/catalog-boundaries.spec.ts`.
+
+## CAS-013 · SAVE20 no se retira al bajar del mínimo de $100 · P1 alta
+
+1. Con la cuenta sintética y carrito vacío, añadir dos unidades de `/products/p108`: subtotal $100.
+2. Aplicar `save20`; se aplica SAVE20 correctamente.
+3. Reducir cantidad a una unidad: subtotal $50. Recargar para observar estado persistido.
+
+**Esperado:** retirar el cupón al dejar de cumplir el mínimo. `/help#coupons` indica explícitamente que se elimina si el subtotal baja del mínimo.
+
+**Actual:** el control de cupón activo `coupon-remove` continúa mostrando SAVE20 después de reducir el subtotal a $50 y recargar.
+
+**Impacto:** el carrito conserva un descuento no elegible. No se envió checkout ni se confirmó un cobro o descuento efectivo en un pedido.
+
+**Reproducción:** `bun run test:account --grep extended`. Test: `tests/account/extended.spec.ts`. Se reprodujo en la exploración automatizada inicial y la ejecución final; el test retira después el cupón y limpia el carrito.
+
+## CAS-014 · Contraste insuficiente en controles y textos compartidos · P2 media
+
+1. Abrir home y observar “Start shopping” y “Accept all”.
+2. Ejecutar axe con reglas WCAG 2 A/AA y 2.1 A/AA.
+
+**Esperado:** contraste mínimo 4.5:1 para el texto normal de estos controles.
+
+**Actual:** axe 4.14 informa texto blanco `#ffffff` sobre verde `#009966`, ratio **3.65:1**, frente a 4.5:1 requerido. Ejemplos: `hero-shop-cta` (16px) y `cookie-accept` (14px). También detecta elementos de bajo contraste en catálogo, login, registro y ayuda.
+
+**Impacto:** dificulta leer acciones e información para usuarios con baja visión. Se agrupa el patrón compartido en una incidencia, no una por nodo o navegador.
+
+**Reproducción:** `bunx playwright test --project=frontend-chromium --grep 'automated accessibility'`. Test: `tests/ui/axe-smoke.spec.ts`. Quince ejecuciones (cinco páginas × tres motores) detectaron `color-contrast`; los resultados incompletos requieren revisión humana. No constituye certificación WCAG.
 
 ## Recomendación
 

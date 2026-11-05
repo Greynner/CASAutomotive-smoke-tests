@@ -18,7 +18,7 @@ No hay acceso al código del marketplace ni a sus requisitos internos. No atribu
 | Móvil                          | Overflow horizontal en home, CTA y filtros de ofertas                                                     | iPhone 13/WebKit y Pixel 5/Chromium emulados |
 | Compatibilidad                 | Tests UI compartidos                                                                                      | Chromium, Firefox y WebKit                   |
 
-La matriz pública contiene 9 checks HTTP + 18 UI × 3 motores + 2 móviles × 2 perfiles = 67 ejecuciones. Además existe un journey autenticado opt-in con varios pasos, excluido de CI y de la matriz predeterminada; ver [account-tests.md](account-tests.md).
+La matriz pública contiene 17 checks HTTP/acceso + 37 UI × 3 motores + 2 móviles × 2 perfiles = 132 ejecuciones. Además existen dos journeys autenticados opt-in, excluidos de CI y de la matriz predeterminada; ver [account-tests.md](account-tests.md). Se añadió axe en cinco páginas, registro negativo cliente, búsqueda/categoría/stock/frontera de precio y observación de red/almacenamiento.
 
 ## Triage de resultados
 
@@ -33,19 +33,19 @@ La matriz pública contiene 9 checks HTTP + 18 UI × 3 motores + 2 móviles × 2
 
 - Limpieza manual del perfil sintético retenido por CAS-007. Se autorizó una cuenta `@example.com`; no crear más mientras falle el borrado.
 - Recuperación sin enumeración y validación completa de contraseñas. Login/logout y rechazo de contraseña incorrecta cubiertos en el journey; registro ejercido en creación exploratoria.
-- Carrito autenticado: ampliar a variantes, límites de stock y cupones adicionales. Cubiertos cantidad 1→2→1, subtotal, WELCOME10, impuesto y umbral de envío; hay discrepancias reproducidas.
+- Carrito autenticado: ampliar a variantes, límites de stock concurrente y más fronteras de cupones. Cubiertos cantidad 1→2→1, subtotal, WELCOME10, SAVE20/TAKE5, código inválido, impuesto y envío. Se confirmó que SAVE20 no se retira al perder elegibilidad (CAS-013).
 - Checkout: pagos rechazados e idempotencia requieren autorización adicional de sandbox. **No enviar pagos ni pedidos**, por límite explícito del usuario. El impuesto y la navegación se comprobaron sin enviar el formulario.
 - Pedidos/cancelación/devoluciones y permisos comprador/vendedor entre dos cuentas controladas.
 - Venta: borradores no públicos, comisiones y métricas que excluyen cancelados.
-- RGPD autenticado: ampliar a ausencia de datos ajenos, rectificación, anonimización y retirada de marketing. Ya se comprobó exportación con dirección guardada y revocación de login tras borrado: ambas fallan (CAS-009 y CAS-007).
-- Auditoría de cookies/tráfico antes de consentir y después de rechazar; la desaparición del banner por sí sola no prueba ausencia de tracking.
-- Ampliar accesibilidad con lector de pantalla real, contraste, zoom/reflow, responsive en más tamaños y dispositivos físicos. Revisión acotada de cinco páginas en escritorio/móvil y muestra de teclado completada: [manual-checks.md](manual-checks.md); se confirmó CAS-011.
+- Smoke técnico de privacidad autenticada: rectificación y preferencia/retirada de marketing persistidas y reflejadas en exportación, con restauración. Exportación con dirección guardada y revocación de login tras borrado fallan (CAS-009 y CAS-007). Pendiente aislamiento entre cuentas, anonimización y backend/logs/backups. No se valida cumplimiento integral RGPD ni se presta asesoría jurídica; ver [privacy-smoke.md](privacy-smoke.md).
+- Ampliar la observación de cookies/tráfico a más recorridos, eventos retrasados y tracking personalizado. Ya se hizo smoke antes de consentir, tras rechazar y tras aceptar en tres rutas y motores, sin trackers reconocibles en la muestra. La desaparición del banner o ausencia de patrones conocidos no prueba ausencia de tracking.
+- Ampliar accesibilidad con lector de pantalla real, revisión humana, zoom/reflow y dispositivos físicos. Muestra de teclado/responsive completada; axe en cinco páginas detectó contraste insuficiente (CAS-014), además de los umbrales sin nombre accesible (CAS-011). Ver [manual-checks.md](manual-checks.md).
 - Pruebas de rendimiento y seguridad específicas, únicamente con alcance y límites acordados.
 
 ## Manejo de datos y RGPD
 
 - La suite pública no registra usuarios ni introduce datos personales, contraseñas o pagos. Solo modifica estado del navegador (consentimiento, filtros, opciones).
-- El journey autenticado, explícitamente autorizado y opt-in, utiliza una cuenta y dirección sintéticas, sin marketing ni pedidos. Retira carrito/dirección y verifica el borrado; ante fallo conserva un ledger privado para limpieza manual. No usar esta capacidad con cuentas ajenas.
+- Los journeys autenticados, explícitamente autorizados y opt-in, utilizan una cuenta y dirección sintéticas; dejan marketing desactivado y no envían pedidos. Retira carrito/dirección y verifica el borrado; ante fallo conserva un ledger privado para limpieza manual. No usar esta capacidad con cuentas ajenas.
 - No utilizar cuentas de personas reales ni copiar credenciales del repo de referencia.
 - Exportaciones, cookies, sesiones, traces y vídeos deben tratarse como potencialmente sensibles. No enviar a servicios IA ni a repositorios públicos.
 - Para issues públicos: reproducir con datos sintéticos, recortar/redactar evidencia y revisar peticiones/cabeceras.

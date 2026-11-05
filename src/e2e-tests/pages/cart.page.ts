@@ -1,11 +1,12 @@
 import { expect, type Page } from '@playwright/test';
+import { gotoAccountPage, reloadAccountPage } from '../support/account-navigation.js';
 import { moneyToCents } from '../support/marketplace.js';
 
 export class CartPage {
   constructor(readonly page: Page) {}
 
   async goto() {
-    await this.page.goto('/cart');
+    await gotoAccountPage(this.page, '/cart');
   }
 
   async mutate(action: () => Promise<unknown>) {
@@ -15,7 +16,7 @@ export class CartPage {
     await action();
     expect((await response).ok(), 'Cart mutation should succeed').toBe(true);
     // Read persisted server state, not a pre-update React render.
-    await this.page.reload();
+    await reloadAccountPage(this.page);
   }
 
   async clear() {

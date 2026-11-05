@@ -4,7 +4,7 @@
 
 El usuario autorizó crear cuentas sintéticas y probar registro/login/carrito, pero **no enviar pagos ni pedidos**. Este límite se conserva aunque checkout muestre instrucciones de tarjetas de demo.
 
-La suite opt-in ejecuta un journey de Chromium con pasos y aserciones suaves:
+La suite opt-in ejecuta **dos journeys de Chromium**, con un worker y la misma cuenta propia. El primero (`extended.spec.ts`) verifica corrección de perfil, reflejo en exportación, activación/retirada de marketing, código inválido, mínimos SAVE20 y TAKE5; restaura perfil, desactiva marketing y vacía el carrito. El segundo (`journey.spec.ts`) realiza:
 
 1. Registrar una cuenta sintética si se autoriza explícitamente su creación inicial, o reutilizar la cuenta propia del ledger.
 2. Login, logout, acceso invitado denegado, contraseña incorrecta rechazada y login válido.
@@ -38,6 +38,7 @@ No borrar el ledger para repetir una creación cuando ya existe una cuenta pendi
 - Solo se aceptan cuentas con marcador de propiedad y email sintético `cas-qa-<UUID>@example.com`; no admite credenciales arbitrarias de personas reales.
 - Contraseña aleatoria. Marketing desactivado explícitamente al registrar.
 - Ledger `.auth/owned-account.json`, ignorado por Git, archivo 0600 y directorio local 0700. No se versiona storageState.
+- Navegación: `domcontentloaded` más montaje visible del banner cliente en contextos que nunca eligen consentimiento. Evita actuar sobre formularios SSR antes de que sus handlers estén conectados. No se usa la redirección tras DELETE como prueba de borrado: se comprueba rechazo del login.
 - Interceptación del navegador: por defecto bloquea escrituras salvo auth, carrito y cuenta/direcciones. No hay código que envíe checkout, pago o pedidos. No se ejecutan recuperación por email ni acciones de vendedor.
 - Traces, vídeos y screenshots desactivados para este proyecto. Los reportes de aserciones/contexto también se consideran privados, aunque solo utilicen datos sintéticos.
 - Resultados separados: `test-results-account/` y `playwright-report-account/`, sin reemplazar la evidencia pública inicial. No se suben automáticamente como artefactos.
@@ -52,4 +53,4 @@ Cuando el producto realmente rechace el login con HTTP 401 tras eliminar, el tes
 
 ## Límites de cobertura
 
-Registro se ejerció en la creación exploratoria inicial; la última ejecución automatizada reutilizó esa única cuenta. No se probaron pedidos, pagos, devoluciones, vendedor ni anonimización de reseñas tras borrado. No se demuestra aislamiento entre dos cuentas ni exportación de pedidos existentes: requieren un escenario posterior autorizado. La dirección guardada sí permite demostrar que la exportación actual omite datos existentes.
+Registro se ejerció en la creación exploratoria inicial; la última ejecución automatizada reutilizó esa única cuenta. No se probaron pedidos, pagos, devoluciones, vendedor ni anonimización de reseñas tras borrado. Se comprobaron rectificación del perfil y persistencia de la retirada de marketing, pero no envío efectivo de campañas ni revocación en otros dispositivos. Se realizó un **smoke técnico de privacidad**, no validación RGPD ni asesoría jurídica. No se demuestra aislamiento entre dos cuentas ni exportación de pedidos existentes: requieren un escenario posterior autorizado. La dirección guardada sí permite demostrar que la exportación actual omite datos existentes.
