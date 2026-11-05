@@ -1,56 +1,56 @@
-# Pruebas autenticadas: ejecución controlada
+# Authenticated tests: controlled execution
 
-## Autorización y límites
+## Authorization and limits
 
-El usuario autorizó crear cuentas sintéticas y probar registro/login/carrito, pero **no enviar pagos ni pedidos**. Este límite se conserva aunque checkout muestre instrucciones de tarjetas de demo.
+The user authorized creating synthetic accounts and testing registration/login/cart, but **not submitting payments or orders**. This limit remains in place even if checkout displays demo card instructions.
 
-La suite opt-in ejecuta **dos journeys de Chromium**, con un worker y la misma cuenta propia. El primero (`extended.spec.ts`) verifica corrección de perfil, reflejo en exportación, activación/retirada de marketing, código inválido, mínimos SAVE20 y TAKE5; restaura perfil, desactiva marketing y vacía el carrito. El segundo (`journey.spec.ts`) realiza:
+The opt-in suite runs **two Chromium journeys**, with one worker and the same owned account. The first (`extended.spec.ts`) checks profile correction, its reflection in the export, marketing opt-in/withdrawal, an invalid code, and the SAVE20 and TAKE5 minimums; it restores the profile, disables marketing and empties the cart. The second (`journey.spec.ts`) performs:
 
-1. Registrar una cuenta sintética si se autoriza explícitamente su creación inicial, o reutilizar la cuenta propia del ledger.
-2. Login, logout, acceso invitado denegado, contraseña incorrecta rechazada y login válido.
-3. Carrito vacío → producto de $50 → cantidad 2 → cantidad 1; sumas y umbral de envío.
-4. Cupón `welcome10`, impuestos después de descuentos y total.
-5. Abrir checkout y regresar, **sin rellenar pago ni pulsar Place order**.
-6. Guardar una dirección ficticia, descargar JSON, comprobar perfil/dirección/secciones prometidas y borrar la descarga.
-7. Retirar carrito y direcciones, solicitar borrado y comprobar que las credenciales ya no autentican desde una sesión limpia.
+1. Register a synthetic account if its initial creation is explicitly authorized, or reuse the owned account in the ledger.
+2. Login, logout, denied guest access, rejected incorrect password and valid login.
+3. Empty cart → $50 product → quantity 2 → quantity 1; sums and shipping threshold.
+4. `welcome10` coupon, tax after discounts and total.
+5. Open checkout and return, **without filling in payment details or clicking Place order**.
+6. Save a fictional address, download JSON, check the profile/address/promised sections and delete the download.
+7. Remove cart contents and addresses, request deletion and check that the credentials no longer authenticate from a clean session.
 
-Las comprobaciones blandas permiten recoger varias discrepancias y llegar a la limpieza. Si falla una precondición de navegación/API, el test falla y el `finally` intenta limpiar. Esto no garantiza eliminación: se verifica expresamente y CAS-007 demuestra el fallo del producto.
+Soft assertions allow multiple discrepancies to be collected while still reaching cleanup. If a navigation/API precondition fails, the test fails and `finally` attempts cleanup. This does not guarantee deletion: it is explicitly verified, and CAS-007 demonstrates the product failure.
 
-## Ejecutar
+## Run
 
 ```bash
 bun run test:account
 bun run report:account
 ```
 
-Primera ejecución en otra máquina, **solo con permiso del propietario del entorno para crear datos QA**:
+First run on another machine, **only with the environment owner's permission to create QA data**:
 
 ```bash
 CREATE_SYNTHETIC_ACCOUNT=1 bun run test:account
 ```
 
-No borrar el ledger para repetir una creación cuando ya existe una cuenta pendiente de limpieza. Reutilizarla evita acumular perfiles sintéticos ante el bug de borrado. Un registro interrumpido conserva el ledger para recuperación manual, en lugar de crear otro automáticamente.
+Do not delete the ledger to repeat account creation when an account is already awaiting cleanup. Reusing it avoids accumulating synthetic profiles while the deletion bug persists. An interrupted registration retains the ledger for manual recovery rather than automatically creating another account.
 
-## Protecciones
+## Safeguards
 
-- Proyecto excluido de la ejecución predeterminada y de CI. Se activa con `RUN_ACCOUNT_TESTS=1`; el script selecciona solo `account-chromium`, un worker, sin retries.
-- Origen de escritura fijado al QA autorizado. Cambiar `BASE_URL` no habilita mutaciones en otro sitio.
-- Solo se aceptan cuentas con marcador de propiedad y email sintético `cas-qa-<UUID>@example.com`; no admite credenciales arbitrarias de personas reales.
-- Contraseña aleatoria. Marketing desactivado explícitamente al registrar.
-- Ledger `.auth/owned-account.json`, ignorado por Git, archivo 0600 y directorio local 0700. No se versiona storageState.
-- Navegación: `domcontentloaded` más montaje visible del banner cliente en contextos que nunca eligen consentimiento. Evita actuar sobre formularios SSR antes de que sus handlers estén conectados. No se usa la redirección tras DELETE como prueba de borrado: se comprueba rechazo del login.
-- Interceptación del navegador: por defecto bloquea escrituras salvo auth, carrito y cuenta/direcciones. No hay código que envíe checkout, pago o pedidos. No se ejecutan recuperación por email ni acciones de vendedor.
-- Traces, vídeos y screenshots desactivados para este proyecto. Los reportes de aserciones/contexto también se consideran privados, aunque solo utilicen datos sintéticos.
-- Resultados separados: `test-results-account/` y `playwright-report-account/`, sin reemplazar la evidencia pública inicial. No se suben automáticamente como artefactos.
+- Project excluded from the default run and CI. Enabled with `RUN_ACCOUNT_TESTS=1`; the script selects only `account-chromium`, with one worker and no retries.
+- Write origin pinned to the authorized QA environment. Changing `BASE_URL` does not enable mutations on another site.
+- Only accounts with an ownership marker and a synthetic `cas-qa-<UUID>@example.com` email are accepted; arbitrary real-person credentials are not allowed.
+- Random password. Marketing explicitly disabled during registration.
+- Ledger `.auth/owned-account.json`, ignored by Git, with file permissions 0600 and local directory permissions 0700. storageState is not versioned.
+- Navigation: `domcontentloaded` plus visible client-side banner mounting in contexts that never choose consent. This avoids acting on SSR forms before their handlers are attached. A redirect after DELETE is not used as proof of deletion: login rejection is checked.
+- Browser interception: blocks writes by default except auth, cart and account/addresses. No code submits checkout, payments or orders. Email recovery and seller actions are not executed.
+- Traces, videos and screenshots disabled for this project. Assertion/context reports are also considered private, even though they only use synthetic data.
+- Separate results: `test-results-account/` and `playwright-report-account/`, without replacing the initial public evidence. They are not automatically uploaded as artifacts.
 
-## Estado de limpieza
+## Cleanup status
 
-**Pendiente por defecto del marketplace:** CAS-007 / [issue #7](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/7).
+**Pending due to a marketplace defect:** CAS-007 / [issue #7](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/7).
 
-La solicitud de borrado devuelve éxito, pero la cuenta vuelve a iniciar sesión. La automatización conserva el ledger con `cleanupStatus` fallido para que el propietario pueda localizar y retirar el perfil desde el backend. No contiene datos reales. Las direcciones sintéticas y el carrito se retiraron en la última ejecución completada.
+The deletion request returns success, but the account can log in again. Automation retains the ledger with a failed `cleanupStatus` so the owner can locate and remove the profile from the backend. It contains no real data. The synthetic addresses and cart contents were removed in the last completed run.
 
-Cuando el producto realmente rechace el login con HTTP 401 tras eliminar, el test retira el ledger automáticamente. No asumir que cerrar sesión o recibir HTTP 200 en DELETE implica haber borrado la cuenta.
+When the product actually rejects login with HTTP 401 after deletion, the test automatically removes the ledger. Do not assume that logging out or receiving HTTP 200 on DELETE means the account has been deleted.
 
-## Límites de cobertura
+## Coverage limits
 
-Registro se ejerció en la creación exploratoria inicial; la última ejecución automatizada reutilizó esa única cuenta. No se probaron pedidos, pagos, devoluciones, vendedor ni anonimización de reseñas tras borrado. Se comprobaron rectificación del perfil y persistencia de la retirada de marketing, pero no envío efectivo de campañas ni revocación en otros dispositivos. Se realizó un **smoke técnico de privacidad**, no validación RGPD ni asesoría jurídica. No se demuestra aislamiento entre dos cuentas ni exportación de pedidos existentes: requieren un escenario posterior autorizado. La dirección guardada sí permite demostrar que la exportación actual omite datos existentes.
+Registration was exercised during initial exploratory creation; the latest automated run reused that single account. Orders, payments, returns, seller flows and review anonymization after deletion were not tested. Profile rectification and persistent marketing withdrawal were checked, but actual campaign delivery and revocation on other devices were not. A **technical privacy smoke test** was performed, not GDPR validation or legal advice. Isolation between two accounts and export of existing orders were not demonstrated: they require a subsequent authorized scenario. The saved address does demonstrate that the current export omits existing data.

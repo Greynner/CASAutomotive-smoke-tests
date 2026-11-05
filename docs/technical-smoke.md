@@ -1,45 +1,45 @@
-# Smoke técnico: acceso, formularios, rendimiento y endurecimiento
+# Technical smoke test: access, forms, performance and hardening
 
-## Acceso sin sesión
+## Unauthenticated access
 
-Ocho checks de integración correctos: cuenta/exportación/direcciones/carrito retornaron 401 a invitados, y cuenta/direcciones/privacidad/pedidos redirigieron a login. No se hicieron enumeración masiva, escaneos de vulnerabilidades, accesos a IDs ajenos ni pruebas de explotación. No equivale a una auditoría de seguridad ni prueba autorización entre dos cuentas autenticadas.
+Eight integration checks passed: account/export/addresses/cart returned 401 for guests, and account/addresses/privacy/orders redirected to login. No bulk enumeration, vulnerability scans, access to other people's IDs or exploitation tests were performed. This is not a security audit and does not test authorization between two authenticated accounts.
 
-## Registro y autenticación
+## Registration and authentication
 
-- Login/logout, contraseña incorrecta rechazada y acceso invitado restringido: journey con la cuenta propia sintética.
-- Quince ejecuciones públicas de registro negativo: formulario vacío, nombre vacío, confirmación vacía, falta de aceptación de términos y confirmación diferente. Los cinco casos se ejecutaron en tres motores.
-- El endpoint de creación se bloquea durante esas pruebas negativas y se comprueba que el frontend no intenta enviarlo. **Solo demuestra validación cliente de esos casos**, no validación del servidor.
-- En exploración, passwords débiles no vacíos y un email malformado se remitían al backend; las peticiones se abortaron por seguridad. No se concluyó si el servidor los acepta o rechaza ni se abrieron bugs sobre ello. La fuerza de contraseña backend y recuperación efectiva por email siguen sin validarse.
-- No se crearon más perfiles ante el fallo de borrado. No se enviaron emails de recuperación, pagos o pedidos.
+- Login/logout, rejected incorrect password and restricted guest access: journey using the owned synthetic account.
+- Fifteen public negative-registration executions: empty form, empty name, empty confirmation, missing terms acceptance and mismatched confirmation. The five cases ran across three engines.
+- The creation endpoint is blocked during these negative tests, and the frontend is checked for attempted submission. **This only demonstrates client-side validation of those cases**, not server validation.
+- During exploration, non-empty weak passwords and a malformed email were sent to the backend; requests were aborted for safety. No conclusion was reached on whether the server accepts or rejects them, and no bugs were opened for them. Backend password-strength validation and actual email recovery remain unverified.
+- No additional profiles were created because of the deletion failure. No recovery emails, payments or orders were submitted.
 
-## Catálogo y cupones
+## Catalog and coupons
 
-Ampliación: búsquedas con mayúsculas, orden invertido, espacios repetidos y nombre de tienda; categoría y persistencia al recargar; filtro de stock; máximo de precio exacto. El catálogo es compartido y no se fijan conteos globales.
+Expansion: searches with uppercase letters, reversed word order, repeated spaces and shop name; category and persistence after reload; stock filter; exact maximum-price boundary. The catalog is shared, and global counts are not fixed.
 
-Con la cuenta sintética se comprobó código inválido rechazado, SAVE20 rechazado a $50 y aceptado a $100, aplicación de TAKE5 y retirada manual de cupones. SAVE20 no se elimina al reducir de $100 a $50 (CAS-013). Se limpia el carrito al terminar. No se confirmó el cálculo/cobro final de un pedido.
+Using the synthetic account, checks covered rejection of an invalid code, SAVE20 rejection at $50 and acceptance at $100, TAKE5 application and manual coupon removal. SAVE20 is not removed when reducing the subtotal from $100 to $50 (CAS-013). The cart is cleaned up at the end. Final order calculation/charging was not confirmed.
 
-## Línea base de navegación, no prueba de carga
+## Navigation baseline, not a load test
 
-Comando: `bun run test:baseline`. Chromium, nueve navegaciones secuenciales, tres contextos nuevos por ruta, un único cliente. Escrituras bloqueadas; observación realizada el **2026-11-05 02:02 UTC**. Todas las respuestas fueron HTTP 200, sin timeouts de 30 s.
+Command: `bun run test:baseline`. Chromium, nine sequential navigations, three new contexts per route, a single client. Writes blocked; observation performed on **2026-11-05 02:02 UTC**. All responses were HTTP 200, with no 30 s timeouts.
 
-| Ruta        | TTFB observado, min–max | Tiempo hasta load, min–max |
-| ----------- | ----------------------- | -------------------------- |
-| `/`         | 717–781 ms              | 814–952 ms                 |
-| `/products` | 692–2106 ms             | 795–2215 ms                |
-| `/help`     | 2829–4094 ms            | 2945–4204 ms               |
+| Route       | Observed TTFB, min–max | Time to load, min–max |
+| ----------- | ---------------------- | --------------------- |
+| `/`         | 717–781 ms             | 814–952 ms            |
+| `/products` | 692–2106 ms            | 795–2215 ms           |
+| `/help`     | 2829–4094 ms           | 2945–4204 ms          |
 
-Son mediciones de este equipo/red/horario; no un benchmark repetible bajo carga, Core Web Vitals de usuarios reales ni aprobación de SLA. No se definió un umbral de rendimiento. Variación de red y carga del QA pueden afectar estos resultados.
+These are measurements from this machine/network/time, not a repeatable benchmark under load, real-user Core Web Vitals or SLA approval. No performance threshold was defined. Network variation and QA load may affect these results.
 
-Los resultados completos se guardan en `test-results/baseline.json` (ignorado por Git). El comando es opt-in, no genera carga concurrente ni se añade a CI.
+Full results are saved in `test-results/baseline.json` (ignored by Git). The command is opt-in, generates no concurrent load and is not added to CI.
 
-## Cabeceras observadas
+## Observed headers
 
-En las respuestas muestreadas no se observaron `Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options: nosniff` ni `Referrer-Policy`. Se recomienda revisar el endurecimiento del despliegue antes de producción. **No se demostró una vulnerabilidad explotable ni se reporta cada cabecera ausente como un bug independiente.** No se evaluaron las cabeceras de todas las rutas/recursos ni configuraciones internas del proxy.
+`Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options: nosniff` and `Referrer-Policy` were not observed in the sampled responses. Reviewing deployment hardening before production is recommended. **No exploitable vulnerability was demonstrated, and each missing header is not reported as a separate bug.** Headers for all routes/resources and internal proxy settings were not assessed.
 
-## Estabilidad de la automatización
+## Automation stability
 
-La ampliación pública tuvo dos fallos intermitentes de navegación (carrito invitado Firefox y CTA WebKit). Ambos escenarios pasaron dos veces por motor al repetir: 12/12. Esto no demuestra estabilidad total.
+The public expansion had two intermittent navigation failures (Firefox guest cart and WebKit CTA). Both scenarios passed twice per engine on rerun: 12/12. This does not demonstrate complete stability.
 
-En las pruebas autenticadas se observaron acciones sobre HTML SSR antes de que estuvieran conectados los handlers y esperas `load` innecesarias. Se usa `domcontentloaded` más un marcador observable de montaje cliente, dentro de contextos que no seleccionan consentimiento. La validación final completó ambos journeys y llegó a sus limpiezas; falló únicamente por discrepancias de producto conocidas.
+Authenticated tests showed actions on SSR HTML before handlers were attached, and unnecessary `load` waits. `domcontentloaded` plus an observable client-mount marker is used within contexts that do not select consent. Final validation completed both journeys and reached their cleanup; it failed only on known product discrepancies.
 
-No se aumentaron reintentos para ocultar errores ni se declararon los bugs como `expected failure`.
+Retries were not increased to conceal errors, and bugs were not declared as `expected failure`.

@@ -1,77 +1,87 @@
-# Informe ejecutivo QA · MarketNest
+# QA executive report · MarketNest
 
-**Fecha:** 2026-11-05 UTC. **Entorno:** QA de DigitalOcean. **Repositorio privado:** [Greynner/CASAutomotive-smoke-tests](https://github.com/Greynner/CASAutomotive-smoke-tests).
+**Date:** 2026-11-05 UTC. **Environment:** DigitalOcean QA. **Private repository:** [Greynner/CASAutomotive-smoke-tests](https://github.com/Greynner/CASAutomotive-smoke-tests).
 
-## Conclusión
+## Conclusion
 
-**No recomendar salida a producción en el estado observado.** Se identificaron discrepancias de borrado/exportación de datos, consentimiento, precios, impuestos, cupones y accesibilidad. La decisión final de salida corresponde al equipo de producto/QA.
+**Production release is not recommended in the observed state.** Discrepancies were identified in data deletion/export, consent, pricing, tax, coupons and accessibility. The final release decision belongs to the product/QA team.
 
-**Se realizó un smoke técnico de privacidad. No se validó cumplimiento integral del RGPD ni se prestó asesoría jurídica.** Se informa de controles observados, defectos y límites; no se afirma certificación legal ni un ciclo QA exhaustivo.
+**A technical privacy smoke test was performed. Comprehensive GDPR compliance was not validated, and no legal advice was provided.** This report describes observed controls, defects and limits; it does not claim legal certification or an exhaustive QA cycle.
 
-## Entrega
+## Delivery
 
-- Bun, TypeScript, Playwright, Page Objects, Biome, axe y GitHub Actions.
-- **132 ejecuciones públicas**: 17 checks HTTP/acceso, 37 tests UI × tres motores y dos tests × dos perfiles móviles.
-- **Dos journeys autenticados opt-in**, solo sobre una cuenta sintética propia: autenticación, perfil, marketing, carrito, cupones, preview de checkout, exportación y borrado.
-- **[14 hallazgos en GitHub Issues](https://github.com/Greynner/CASAutomotive-smoke-tests/issues)**, agrupados y priorizados, con reproducción y esperado/actual. No se publican credenciales ni datos exportados.
-- [Hallazgos detallados](findings.md), [plan](test-plan.md), [smoke de privacidad](privacy-smoke.md), [smoke técnico](technical-smoke.md), [revisión UI](manual-checks.md) y [borrador de correo](delivery-email.md).
+- Bun, TypeScript, Playwright, Page Objects, Biome, axe and GitHub Actions.
+- **75 unit tests** for automation utilities and **10 local HTTP/browser integration tests**, separate from the live-site matrix. Both deterministic layers pass. Unit coverage is 100% lines/functions for the two exercised utility modules, not the application or whole repository.
+- Five CI jobs separate static checks, unit coverage/JUnit, local integration, deployed API checks and cross-browser regression. See [testing strategy and SDLC traceability](testing-strategy.md).
+- **132 public test executions**: 17 HTTP/access checks, 37 UI tests × three engines and two tests × two mobile profiles.
+- **Two opt-in authenticated journeys**, using only one owned synthetic account: authentication, profile, marketing, cart, coupons, checkout preview, export and deletion.
+- **[14 findings in GitHub Issues](https://github.com/Greynner/CASAutomotive-smoke-tests/issues)**, grouped and prioritized, with reproduction steps and expected/actual behavior. Credentials and exported data are not published.
+- [Detailed findings](findings.md), [plan](test-plan.md), [privacy smoke test](privacy-smoke.md), [technical smoke test](technical-smoke.md), [UI review](manual-checks.md) and [email draft](delivery-email.md).
 
-## Resultados de la ampliación final
+## Added automation-layer verification
 
-| Ejecución                            | Resultado                                                                                                                             |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Matriz pública, 01:52 UTC            | **132: 90 correctas y 42 fallidas**, 412.6 s. Cuarenta fallos reproducen nueve defectos públicos; dos son intermitentes de navegación |
-| Repetición de navegación             | Dos escenarios × tres motores × dos repeticiones: **12/12 correctas**; la causa intermitente no se considera resuelta                 |
-| Dos journeys autenticados, 02:09 UTC | Ambos alcanzan sus pasos y limpiezas; fallan por **cinco discrepancias**: CAS-007–CAS-010 y CAS-013. Duración 285.0 s                 |
-| Acceso invitado                      | Ocho checks correctos: cuatro endpoints protegidos y cuatro redirecciones a login                                                     |
-| Smoke de privacidad de red           | Nueve escenarios correctos, con límites de detección explícitos                                                                       |
-| Registro negativo cliente            | Quince ejecuciones correctas; backend de creación bloqueado por seguridad                                                             |
-| Axe, cinco páginas × tres motores    | Quince ejecuciones detectan contraste insuficiente, agrupadas en CAS-014                                                              |
-| Línea base, nueve navegaciones       | Nueve HTTP 200, sin timeout de 30 s; no equivale a prueba de carga ni aprobación de SLA                                               |
-| Calidad estática                     | Biome, TypeScript e instalación con lockfile congelado correctos                                                                      |
+The unit and local integration suites were added after the dated live assessment below. They run without QA credentials or account mutations. `bun run test:local` verifies both layers; CI also enforces a 90% line/function coverage gate and publishes unit/local-fixture reports. No marketplace application-source unit coverage is claimed.
 
-Las filas describen subconjuntos o ejecuciones distintas: **no sumarlas como casos independientes**. Las ejecuciones anteriores se conservan como historia en [findings.md](findings.md). Los tests no se omiten ni aceptan el defecto para simular CI verde; el sitio tiene bugs y CI puede quedar rojo.
+Validation: 75/75 unit tests, 10/10 local integration tests, valid JUnit output and 100% line/function coverage for the two exercised utilities. A deliberately partial coverage run exited non-zero, confirming the 90% gate. YAML parsing and job-dependency references were checked locally.
 
-## Prioridad propuesta
+A separate live API recheck passed 15/17 checks: Terms of Service still returned 404, and `/sell` exceeded the request timeout. The latter is recorded as an unconfirmed transport/intermittency result, not a new confirmed defect. No new authenticated mutations or full live-browser rerun was performed for this documentation/testing-layer change.
 
-1. **[#7: borrado inefectivo](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/7):** después de DELETE exitoso, las credenciales siguen autenticando.
-2. **[#9: exportación incompleta](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/9):** omite una dirección guardada existente.
-3. **[#1: marketing premarcado](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/1):** contradice el opt-in publicado.
-4. **[#10: impuesto antes del descuento](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/10):** $4.00 en vez de $3.60 en el ejemplo WELCOME10.
-5. **[#2: precio de variante no actualiza](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/2):** opción +$10 mantiene el precio base.
-6. **[#13: cupón no elegible persiste](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/13):** SAVE20 continúa activo tras bajar de $100 a $50.
+## Final expansion results
 
-Otros hallazgos: descuentos porcentuales inflados (#3), rechazo de cookies no recordado (#4), términos 404 (#5), ordenación (#6), envío cobrado exactamente a $50 (#8), nombres accesibles de estrellas (#11), máximo de precio exclusivo (#12, confirmar interpretación inclusiva con producto) y contraste insuficiente (#14).
+| Run                                   | Result                                                                                                                            |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Public matrix, 01:52 UTC              | **132: 90 passed and 42 failed**, 412.6 s. Forty failures reproduce nine public defects; two are intermittent navigation failures |
+| Navigation rerun                      | Two scenarios × three engines × two repetitions: **12/12 passed**; the intermittent cause is not considered resolved              |
+| Two authenticated journeys, 02:09 UTC | Both reached their steps and cleanup; failed due to **five discrepancies**: CAS-007–CAS-010 and CAS-013. Duration 285.0 s         |
+| Guest access                          | Eight checks passed: four protected endpoints and four login redirects                                                            |
+| Network privacy smoke test            | Nine scenarios passed, with explicit detection limits                                                                             |
+| Negative client-side registration     | Fifteen executions passed; account-creation backend blocked for safety                                                            |
+| Axe, five pages × three engines       | Fifteen executions detected insufficient contrast, grouped under CAS-014                                                          |
+| Baseline, nine navigations            | Nine HTTP 200 responses, no 30 s timeout; not a load test or SLA approval                                                         |
+| Static quality                        | Biome, TypeScript and frozen-lockfile installation passed                                                                         |
 
-## Smoke de privacidad: qué se pudo comprobar
+The rows describe subsets or separate runs: **do not add them together as independent cases**. Earlier runs are retained as history in [findings.md](findings.md). Tests are not skipped or changed to accept defects to simulate green CI; the site has bugs and CI may remain red.
 
-- Muestreo de cookies, claves de storage y tráfico reconocible antes de elegir, tras rechazar y tras aceptar, en home/productos/ayuda y tres motores. No se reconocieron trackers analíticos en esa muestra; esto no demuestra su ausencia absoluta.
-- Activación y retirada de marketing en la cuenta sintética: UI y exportación reflejaron el cambio; se dejó desactivado. No se probó el envío real de campañas.
-- Rectificación de perfil y reflejo en exportación: correctos en la muestra, con restauración posterior.
-- Exportación con dirección existente y revocación de acceso tras borrar: **fallan**, documentadas en #9 y #7.
-- Invitados sin acceso a cuatro endpoints y cuatro rutas protegidas; no equivale a aislamiento entre dos usuarios autenticados.
+## Proposed priorities
 
-No se revisaron jurídicamente bases legales, contratos, transferencias, retención o textos de políticas. Tampoco se accedió a backend, logs o backups. Véase [privacy-smoke.md](privacy-smoke.md).
+1. **[#7: ineffective deletion](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/7):** credentials still authenticate after a successful DELETE.
+2. **[#9: incomplete export](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/9):** omits an existing saved address.
+3. **[#1: preselected marketing](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/1):** contradicts the published opt-in policy.
+4. **[#10: tax before discount](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/10):** $4.00 instead of $3.60 in the WELCOME10 example.
+5. **[#2: variant price does not update](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/2):** a +$10 option retains the base price.
+6. **[#13: ineligible coupon persists](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/13):** SAVE20 remains active after reducing the subtotal from $100 to $50.
 
-## Datos, seguridad y limpieza
+Other findings: inflated discount percentages (#3), cookie rejection not remembered (#4), terms 404 (#5), sorting (#6), shipping charged at exactly $50 (#8), accessible star names (#11), exclusive maximum price (#12, confirm inclusive interpretation with product) and insufficient contrast (#14).
 
-- Una única cuenta sintética autorizada, reutilizada; no se crearon más perfiles durante esta ampliación.
-- Perfil restaurado, marketing desactivado, carrito y dirección retirados, descarga borrada.
-- **La cuenta requiere limpieza manual del propietario del entorno por el bug #7.** Ledger local `.auth/owned-account.json`, ignorado por Git y con permisos restringidos.
-- Sin acceso a cuentas ajenas, sin pagos ni pedidos. El bloqueo de escrituras y el alcance de la cuenta se conservan.
-- Sin publicación de sesiones, credenciales, exportaciones, trazas, vídeos o capturas autenticadas. El proyecto de cuenta no entra en CI automático.
+## Privacy smoke test: what could be checked
 
-## Pendientes y límites de cierre
+- Sampled cookies, storage keys and recognizable traffic before choosing, after rejection and after acceptance, on home/products/help across three engines. No analytics trackers were recognized in that sample; this does not prove their absolute absence.
+- Marketing opt-in and withdrawal on the synthetic account: UI and export reflected the change; it was left disabled. Actual campaign delivery was not tested.
+- Profile rectification and its reflection in the export: passed in the sample, followed by restoration.
+- Export with an existing address and access revocation after deletion: **failed**, documented in #9 and #7.
+- Guests denied access to four endpoints and four protected routes; this does not establish isolation between two authenticated users.
 
-- Corregir o aceptar formalmente los 14 hallazgos, limpiar el perfil retenido, hacer retesting y ejecutar regresión sobre el despliegue corregido.
-- Pagos, pedidos, cancelaciones/devoluciones y vendedor requieren un escenario posterior autorizado; no se ejecutan por el límite explícito del usuario.
-- Aislamiento entre dos cuentas, validación backend de contraseñas, recuperación efectiva por email, sesiones en otros dispositivos, stock concurrente y cupones adicionales no quedan aprobados.
-- La accesibilidad combina muestra de teclado/responsive y axe; siguen pendientes lector de pantalla real, revisión humana de resultados incompletos y dispositivos físicos. No se afirma conformidad WCAG.
-- Rendimiento observado sin carga concurrente ni SLA. Se recomienda revisar endurecimiento de cabeceras ausentes; no se demostró explotación ni una auditoría de seguridad completa.
-- Investigar fallos intermitentes públicos; las repeticiones correctas no certifican estabilidad.
-- Conceder acceso al evaluador y enviar el informe. El repositorio es privado; no se enviaron correos ni invitaciones a terceros sin destinatario autorizado.
+Legal bases, contracts, transfers, retention and policy wording were not legally reviewed. Backend, logs and backups were not accessed either. See [privacy-smoke.md](privacy-smoke.md).
 
-## Reproducir
+## Data, safety and cleanup
+
+- A single authorized synthetic account, reused; no additional profiles were created during this expansion.
+- Profile restored, marketing disabled, cart contents and address removed, download deleted.
+- **The account requires manual cleanup by the environment owner due to bug #7.** Local ledger `.auth/owned-account.json`, ignored by Git and with restricted permissions.
+- No access to other people's accounts, no payments or orders. Write blocking and account scope remain in place.
+- No publication of sessions, credentials, exports, traces, videos or authenticated screenshots. The account project is not included in automatic CI.
+
+## Outstanding work and closure limits
+
+- Fix or formally accept the 14 findings, clean up the retained profile, retest and run regression against the corrected deployment.
+- Payments, orders, cancellations/returns and seller flows require a subsequent authorized scenario; they are not executed because of the user's explicit limit.
+- Isolation between two accounts, backend password validation, actual email recovery, sessions on other devices, concurrent stock and additional coupons remain unapproved.
+- Accessibility combines a keyboard/responsive sample and axe; actual screen-reader testing, human review of incomplete results and physical devices remain pending. WCAG conformance is not claimed.
+- Performance observed without concurrent load or an SLA. Review of missing-header hardening is recommended; no exploit or complete security audit was demonstrated.
+- Investigate intermittent public failures; successful reruns do not certify stability.
+- Grant evaluator access and send the report. The repository is private; no emails or third-party invitations were sent without an authorized recipient.
+
+## Reproduce
 
 ```bash
 bun install --frozen-lockfile
@@ -80,11 +90,11 @@ bun run lint
 bun run typecheck
 bun run test
 bun run report
-# Opt-in: cuenta propia, sin pagos/pedidos; ver account-tests.md
+# Opt-in: owned account, no payments/orders; see account-tests.md
 bun run test:account
 bun run report:account
-# Observación secuencial, sin carga concurrente
+# Sequential observation, no concurrent load
 bun run test:baseline
 ```
 
-En entrevista, distinguir observación, regla publicada, impacto, hipótesis de causa y límites. No presentar esta entrega como una auditoría legal ni como aprobación integral de producción.
+During the interview, distinguish observation, published rule, impact, hypothesized cause and limits. Do not present this delivery as a legal audit or comprehensive production approval.

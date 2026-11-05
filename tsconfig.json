@@ -4,8 +4,9 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
+    "skipLibCheck": true,
     "noEmit": true,
-    "types": ["@playwright/test", "node"]
+    "types": ["@playwright/test", "node", "bun"]
   },
-  "include": ["playwright.config.ts", "src/e2e-tests/**/*.ts", "scripts/**/*.ts"]
+  "include": ["playwright*.config.ts", "src/e2e-tests/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts"]
 }

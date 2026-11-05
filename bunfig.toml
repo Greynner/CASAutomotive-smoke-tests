@@ -1,0 +1,8 @@
+[test]
+# Keep Bun discovery away from Playwright specs and live environments.
+root = "tests/unit"
+coverageSkipTestFiles = true
+coverageReporter = ["text", "lcov"]
+coverageDir = "coverage/unit"
+# Applies only to the modules exercised by the unit suite, not the marketplace app.
+coverageThreshold = { lines = 0.9, functions = 0.9 }

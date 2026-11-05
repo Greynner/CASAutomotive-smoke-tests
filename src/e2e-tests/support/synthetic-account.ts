@@ -2,34 +2,26 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { type BrowserContext, expect, type Page } from '@playwright/test';
 import { gotoAccountPage } from './account-navigation.js';
+import {
+  approvedAccountOrigin as approvedOrigin,
+  assertApprovedAccountOrigin,
+  assertSyntheticAccount,
+  isAllowedAccountRequest,
+  type SyntheticAccount,
+} from './account-policy.js';
 
-const approvedOrigin = 'https://qa-marketplace-app-b9mpo.ondigitalocean.app';
+export type { SyntheticAccount } from './account-policy.js';
+
 const ledgerPath = '.auth/owned-account.json';
 
-export type SyntheticAccount = {
-  email: string;
-  password: string;
-  targetOrigin: string;
-  createdBy: string;
-  cleanupStatus: string;
-};
-
 export async function guardAccountContext(context: BrowserContext, baseURL: string) {
-  if (new URL(baseURL).origin !== approvedOrigin) {
-    throw new Error('Account mutations are authorized only on the original QA origin.');
-  }
+  assertApprovedAccountOrigin(baseURL);
   await context.route('**/*', async (route) => {
     const request = route.request();
-    if (['GET', 'HEAD', 'OPTIONS'].includes(request.method())) return route.continue();
-    const url = new URL(request.url());
-    const allowed =
-      url.origin === approvedOrigin &&
-      !/order|payment|checkout/i.test(url.pathname) &&
-      (/^\/api\/auth\/(register|login|logout)$/.test(url.pathname) ||
-        /^\/api\/cart(?:\/.*)?$/.test(url.pathname) ||
-        /^\/api\/account(?:\/addresses(?:\/[^/]+)?)?$/.test(url.pathname));
     // Deny by default: in particular no order, payment, reset-email or seller writes.
-    if (!allowed) return route.abort('blockedbyclient');
+    if (!isAllowedAccountRequest(request.method(), request.url())) {
+      return route.abort('blockedbyclient');
+    }
     return route.continue();
   });
 }
@@ -47,14 +39,8 @@ export async function ownedAccount(page: Page): Promise<SyntheticAccount> {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
   if (stored) {
-    const account = JSON.parse(stored) as SyntheticAccount;
-    if (
-      account.targetOrigin !== approvedOrigin ||
-      account.createdBy !== 'cas-synthetic-qa' ||
-      !/^cas-qa-[a-f0-9-]+@example\.com$/.test(account.email)
-    ) {
-      throw new Error('Refusing to mutate an account without an owned synthetic-account ledger.');
-    }
+    const account: unknown = JSON.parse(stored);
+    assertSyntheticAccount(account);
     return account;
   }
   if (process.env.CREATE_SYNTHETIC_ACCOUNT !== '1') {

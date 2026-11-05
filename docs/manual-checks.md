@@ -1,45 +1,45 @@
-# Revisión pública de UI, responsive y accesibilidad básica
+# Public UI, responsive layout and basic accessibility review
 
-**Fecha:** 2026-11-05 UTC. **Método:** inspección con navegador automatizado y árbol de accesibilidad, sin enviar formularios ni acceder a cuentas. No sustituye una evaluación humana con tecnologías de asistencia.
+**Date:** 2026-11-05 UTC. **Method:** inspection using an automated browser and accessibility tree, without submitting forms or accessing accounts. This does not replace a human assessment using assistive technologies.
 
-## Muestra revisada
+## Reviewed sample
 
-- Páginas: `/`, `/products`, `/login`, `/register`, `/help`.
-- Chromium: escritorio 1440×900 y móvil 390×900; diez combinaciones página/viewport.
-- Móvil: filtros expandidos y activación con teclado.
+- Pages: `/`, `/products`, `/login`, `/register`, `/help`.
+- Chromium: desktop 1440×900 and mobile 390×900; ten page/viewport combinations.
+- Mobile: expanded filters and keyboard activation.
 
-| Comprobación                                  | Resultado observado                              | Límite                                                             |
-| --------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
-| Overflow horizontal del documento             | No observado en las diez combinaciones           | No cubre todos los anchos, idiomas o contenidos                    |
-| Filtros expandidos en móvil                   | Contenido dentro de 390px                        | No equivale a todos los dispositivos físicos                       |
-| Landmark principal y título                   | Un `main` y un H1 descriptivo en cada página     | No audita toda la jerarquía semántica                              |
-| Labels de login/registro y nombre de búsqueda | Asociaciones presentes                           | No se enviaron formularios en esta revisión                        |
-| Primeros diez Tab stops por combinación       | Navegación y controles alcanzables               | No recorrido exhaustivo ni prueba de todas las trampas de foco     |
-| Filters móvil con Enter                       | Abre y expone estado expandido                   | No prueba completa con lector de pantalla                          |
-| Nombre accesible de umbrales de valoración    | **Falla: cuatro radios se anuncian como `& up`** | CAS-011 / issue #11; test automatizado reproducido en tres motores |
+| Check                                     | Observed result                                | Limit                                                               |
+| ----------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
+| Horizontal document overflow              | Not observed in the ten combinations           | Does not cover all widths, languages or content                     |
+| Expanded mobile filters                   | Content fits within 390px                      | Does not cover all physical devices                                 |
+| Main landmark and heading                 | One `main` and one descriptive H1 on each page | Does not audit the entire semantic hierarchy                        |
+| Login/registration labels and search name | Associations present                           | No forms were submitted in this review                              |
+| First ten Tab stops per combination       | Navigation and controls reachable              | Not exhaustive navigation or testing of all focus traps             |
+| Mobile Filters with Enter                 | Opens and exposes expanded state               | Not complete screen-reader testing                                  |
+| Accessible names of rating thresholds     | **Fails: four radios are announced as `& up`** | CAS-011 / issue #11; automated test reproduced across three engines |
 
-La ausencia de outline, por sí sola, no se registró como defecto: se observó cambio de borde en el foco de búsqueda. No se deduce conformidad de contraste ni de todos los estados de foco.
+The absence of an outline alone was not recorded as a defect: a border change was observed when search received focus. No conformance is inferred for contrast or all focus states.
 
-## Defecto nuevo
+## New defect
 
-[CAS-011 / issue #11](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/11): los radios de valoración no indican 4, 3, 2 o 1 estrellas en su nombre accesible. Los SVG están ocultos al árbol accesible. Un lector de pantalla no puede distinguir los umbrales por sus nombres.
+[CAS-011 / issue #11](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/11): rating radios do not indicate 4, 3, 2 or 1 stars in their accessible names. The SVGs are hidden from the accessibility tree. A screen-reader user cannot distinguish the thresholds by their names.
 
 ```bash
 bunx playwright test --project=frontend-chromium --grep '@accessibility'
 ```
 
-## Ampliación automática axe
+## Automated axe expansion
 
-Se añadió `@axe-core/playwright` 4.14.0 con reglas WCAG 2 A/AA y 2.1 A/AA, sin excluir reglas. Cinco páginas × tres motores detectaron `color-contrast` (CAS-014 / issue #14), agrupado como un patrón compartido. Ejemplos de home: texto blanco sobre `#009966`, 3.65:1 frente a 4.5:1 requerido en “Start shopping” y “Accept all”. Se guardan solo reglas, selectores e impactos en adjuntos sanitizados; los resultados incompletos requieren revisión humana.
+`@axe-core/playwright` 4.14.0 was added with WCAG 2 A/AA and 2.1 A/AA rules, without excluding rules. Five pages × three engines detected `color-contrast` (CAS-014 / issue #14), grouped as a shared pattern. Home examples: white text on `#009966`, 3.65:1 versus the required 4.5:1 for “Start shopping” and “Accept all”. Only rules, selectors and impacts are saved in sanitized attachments; incomplete results require human review.
 
 ```bash
 bunx playwright test --project=frontend-chromium --grep 'automated accessibility'
 ```
 
-No se confunde un scan automático con una auditoría completa o aprobación WCAG.
+An automated scan is not treated as a complete audit or WCAG approval.
 
-## No evaluado / no aprobado
+## Not assessed / not approved
 
-- Lector de pantalla real, contraste de todos los estados con revisión humana, zoom/reflow al 200–400%, navegación de teclado exhaustiva y validación integral WCAG.
-- Dispositivos físicos, más breakpoints, localización e interacción con pedidos/vendedor.
-- No afirmar “accesibilidad aprobada” o “responsive completo” a partir de esta muestra.
+- Actual screen-reader use, human review of contrast in all states, zoom/reflow at 200–400%, exhaustive keyboard navigation and comprehensive WCAG validation.
+- Physical devices, more breakpoints, localization and order/seller interactions.
+- Do not claim “accessibility approved” or “fully responsive” based on this sample.

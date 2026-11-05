@@ -5,8 +5,13 @@
   "type": "module",
   "description": "Risk-based Playwright + TypeScript regression tests for MarketNest QA.",
   "scripts": {
-    "test": "playwright test",
-    "test:integration": "playwright test --project=integration",
+    "test": "bun run test:local && bun run test:e2e",
+    "test:unit": "bun test",
+    "test:unit:coverage": "bun test --coverage",
+    "test:integration": "playwright test --config=playwright.integration.config.ts",
+    "test:local": "bun run test:unit && bun run test:integration",
+    "test:api": "playwright test --project=integration",
+    "test:e2e": "playwright test",
     "test:frontend": "playwright test --project='frontend-*'",
     "test:smoke": "playwright test --project=integration --project=frontend-chromium",
     "test:account": "RUN_ACCOUNT_TESTS=1 playwright test --project=account-chromium --workers=1",
@@ -23,6 +28,7 @@
     "@axe-core/playwright": "^4.14.0",
     "@biomejs/biome": "^2.4.16",
     "@playwright/test": "^1.52.0",
+    "@types/bun": "1.3.6",
     "@types/node": "^24.0.0",
     "dotenv": "^17.4.2",
     "typescript": "^5.8.3"
