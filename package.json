@@ -1,0 +1,28 @@
+{
+  "name": "casautomotive-smoke-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Risk-based Playwright + TypeScript regression tests for MarketNest QA.",
+  "scripts": {
+    "test": "playwright test",
+    "test:integration": "playwright test --project=integration",
+    "test:frontend": "playwright test --project='frontend-*'",
+    "test:smoke": "playwright test --project=integration --project=frontend-chromium",
+    "test:account": "RUN_ACCOUNT_TESTS=1 playwright test --project=account-chromium --workers=1",
+    "report:account": "playwright show-report playwright-report-account",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^24.0.0",
+    "dotenv": "^17.4.2",
+    "typescript": "^5.8.3"
+  }
+}
