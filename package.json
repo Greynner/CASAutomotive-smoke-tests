@@ -15,6 +15,8 @@
     "test:frontend": "playwright test --project='frontend-*'",
     "test:smoke": "playwright test --project=integration --project=frontend-chromium",
     "test:account": "RUN_ACCOUNT_TESTS=1 playwright test --project=account-chromium --workers=1",
+    "test:demo": "RUN_DEMO_TESTS=1 playwright test --config=playwright.demo.config.ts",
+    "report:demo": "playwright show-report playwright-report-demo",
     "report:account": "playwright show-report playwright-report-account",
     "test:baseline": "bun scripts/qa-baseline.ts",
     "test:headed": "playwright test --headed",

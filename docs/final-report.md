@@ -11,22 +11,31 @@
 ## Delivery
 
 - Bun, TypeScript, Playwright, Page Objects, Biome, axe and GitHub Actions.
-- **75 unit tests** for automation utilities and **10 local HTTP/browser integration tests**, separate from the live-site matrix. Both deterministic layers pass. Unit coverage is 100% lines/functions for the two exercised utility modules, not the application or whole repository.
+- **140 unit tests** for automation utilities and **10 local HTTP/browser integration tests**, separate from the live-site matrix. Both deterministic layers pass. Unit coverage is 100% lines/functions for the four exercised utility modules, not the application or whole repository.
 - Five CI jobs separate static checks, unit coverage/JUnit, local integration, deployed API checks and cross-browser regression. See [testing strategy and SDLC traceability](testing-strategy.md).
 - **132 public test executions**: 17 HTTP/access checks, 37 UI tests × three engines and two tests × two mobile profiles.
-- **Two opt-in authenticated journeys**, using only one owned synthetic account: authentication, profile, marketing, cart, coupons, checkout preview, export and deletion.
-- **[14 findings in GitHub Issues](https://github.com/Greynner/CASAutomotive-smoke-tests/issues)**, grouped and prioritized, with reproduction steps and expected/actual behavior. Credentials and exported data are not published.
+- **One later authorized bounded demo journey**: two card declines, two approved demo orders, Processing cancellation, seller shipment/delivery, return eligibility, fee/KPI checks and one cross-role authorization probe. See [demo runbook](demo-tests.md).
+- **Two legacy opt-in authenticated journeys**, using only one owned synthetic account: authentication, profile, marketing, cart, coupons, checkout preview, export and deletion.
+- **[17 findings in GitHub Issues](https://github.com/Greynner/CASAutomotive-smoke-tests/issues)**, grouped and prioritized, with reproduction steps and expected/actual behavior. Credentials and exported data are not published.
 - [Detailed findings](findings.md), [plan](test-plan.md), [privacy smoke test](privacy-smoke.md), [technical smoke test](technical-smoke.md), [UI review](manual-checks.md) and [email draft](delivery-email.md).
 
 ## Added automation-layer verification
 
 The unit and local integration suites were added after the dated live assessment below. They run without QA credentials or account mutations. `bun run test:local` verifies both layers; CI also enforces a 90% line/function coverage gate and publishes unit/local-fixture reports. No marketplace application-source unit coverage is claimed.
 
-Validation: 75/75 unit tests, 10/10 local integration tests, valid JUnit output and 100% line/function coverage for the two exercised utilities. A deliberately partial coverage run exited non-zero, confirming the 90% gate. YAML parsing and job-dependency references were checked locally.
+Latest offline validation: 140/140 unit tests, 10/10 local integration tests, valid JUnit output and 100% line/function coverage for the four exercised utilities. A deliberately partial coverage run exited non-zero, confirming the 90% gate. YAML parsing and job-dependency references were checked locally.
 
-A separate live API recheck passed 15/17 checks: Terms of Service still returned 404, and `/sell` exceeded the request timeout. The latter is recorded as an unconfirmed transport/intermittency result, not a new confirmed defect. No new authenticated mutations or full live-browser rerun was performed for this documentation/testing-layer change.
+A separate live API recheck passed 15/17 checks: Terms of Service still returned 404, and `/sell` exceeded the request timeout. The latter is recorded as an unconfirmed transport/intermittency result, not a new confirmed defect. That earlier testing-layer update did not perform authenticated mutations or a full live-browser rerun. The later, separately authorized demo execution below adds new scope without rewriting historical results.
 
-## Final expansion results
+## Later authorized demo results
+
+At **03:55 UTC**, a bounded Playwright journey completed in **101.4 s** using persisted checkpoints from four earlier controlled checkout submissions: **two HTTP 402 declines and two HTTP 201 approvals**, exactly two owned orders. One is Cancelled; one is Shipped/Delivered with fake tracking. No real payment/gateway settlement is claimed; checkout explicitly declares no real payments and only its published cards were used.
+
+The journey failed on three new defects: cancellation does not restore stock (#15), cancelled sales inflate seller KPIs (#16), and the seller fee includes shipping/tax (#17). It also reconfirmed incomplete existing-order export (#9) and ineffective buyer erasure (#7). Buyer-to-other-seller product update returned 403; guest order access redirected to login.
+
+Return eligibility was 30 calendar days and its policy link worked. **No return-request/refund-processing control was exposed**, so actual return processing/refund settlement remains unverified. Post-run lock/cart/cleanup hardening was verified offline; the completed journal was not reset to create more orders.
+
+## Earlier expansion results
 
 | Run                                   | Result                                                                                                                            |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -51,6 +60,8 @@ The rows describe subsets or separate runs: **do not add them together as indepe
 5. **[#2: variant price does not update](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/2):** a +$10 option retains the base price.
 6. **[#13: ineligible coupon persists](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/13):** SAVE20 remains active after reducing the subtotal from $100 to $50.
 
+Additional release priorities: [#15 stock restoration](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/15) and [#17 item-only seller fees](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/17). [#16](https://github.com/Greynner/CASAutomotive-smoke-tests/issues/16) records cancelled-sale KPI inflation.
+
 Other findings: inflated discount percentages (#3), cookie rejection not remembered (#4), terms 404 (#5), sorting (#6), shipping charged at exactly $50 (#8), accessible star names (#11), exclusive maximum price (#12, confirm inclusive interpretation with product) and insufficient contrast (#14).
 
 ## Privacy smoke test: what could be checked
@@ -65,17 +76,17 @@ Legal bases, contracts, transfers, retention and policy wording were not legally
 
 ## Data, safety and cleanup
 
-- A single authorized synthetic account, reused; no additional profiles were created during this expansion.
-- Profile restored, marketing disabled, cart contents and address removed, download deleted.
-- **The account requires manual cleanup by the environment owner due to bug #7.** Local ledger `.auth/owned-account.json`, ignored by Git and with restricted permissions.
-- No access to other people's accounts, no payments or orders. Write blocking and account scope remain in place.
+- Two authorized synthetic roles: the reused seller and one additional buyer, plus one labeled demo shop/listing. Only these resources were modified.
+- Profiles restored, marketing disabled, both carts empty, listing Draft, original address/download removed. One Cancelled and one Delivered demo order remain as history.
+- **Environment-owner cleanup is required for both profiles, shop/draft and demo history because erasure still fails (#7).** Private ledgers remain under `.auth/`, ignored by Git with restricted permissions.
+- Four demo submissions used only allowlisted published test cards and synthetic data. No real card, goods, carrier shipment or real financial settlement was used/verified. Legacy no-order guards remain unchanged.
 - No publication of sessions, credentials, exports, traces, videos or authenticated screenshots. The account project is not included in automatic CI.
 
 ## Outstanding work and closure limits
 
-- Fix or formally accept the 14 findings, clean up the retained profile, retest and run regression against the corrected deployment.
-- Payments, orders, cancellations/returns and seller flows require a subsequent authorized scenario; they are not executed because of the user's explicit limit.
-- Isolation between two accounts, backend password validation, actual email recovery, sessions on other devices, concurrent stock and additional coupons remain unapproved.
+- Fix or formally accept the 17 findings, clean up the retained synthetic resources, retest and run regression against the corrected deployment.
+- Real payment-provider behavior, actual return/refund processing, out-of-window returns and the full invalid-transition matrix remain unverified. The bounded demo now covers declared test-card outcomes, two orders, Processing cancellation, seller fulfilment and visible return eligibility.
+- One concrete cross-role update was rejected (403), but full account isolation, backend password validation, actual email recovery, sessions on other devices, concurrent stock and additional coupons remain unverified.
 - Accessibility combines a keyboard/responsive sample and axe; actual screen-reader testing, human review of incomplete results and physical devices remain pending. WCAG conformance is not claimed.
 - Performance observed without concurrent load or an SLA. Review of missing-header hardening is recommended; no exploit or complete security audit was demonstrated.
 - Investigate intermittent public failures; successful reruns do not certify stability.

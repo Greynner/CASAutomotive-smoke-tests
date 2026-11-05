@@ -2,7 +2,7 @@
 
 ## Unauthenticated access
 
-Eight integration checks passed: account/export/addresses/cart returned 401 for guests, and account/addresses/privacy/orders redirected to login. No bulk enumeration, vulnerability scans, access to other people's IDs or exploitation tests were performed. This is not a security audit and does not test authorization between two authenticated accounts.
+Eight integration checks passed: account/export/addresses/cart returned 401 for guests, and account/addresses/privacy/orders redirected to login. No bulk enumeration, vulnerability scans, access to other people's IDs or exploitation tests were performed. This original guest-access stage was not a security audit or a two-user authorization test. The later [demo extension](demo-tests.md) additionally verified a buyer-to-other-seller product update rejection (403), without claiming complete IDOR coverage.
 
 ## Registration and authentication
 
@@ -10,7 +10,7 @@ Eight integration checks passed: account/export/addresses/cart returned 401 for 
 - Fifteen public negative-registration executions: empty form, empty name, empty confirmation, missing terms acceptance and mismatched confirmation. The five cases ran across three engines.
 - The creation endpoint is blocked during these negative tests, and the frontend is checked for attempted submission. **This only demonstrates client-side validation of those cases**, not server validation.
 - During exploration, non-empty weak passwords and a malformed email were sent to the backend; requests were aborted for safety. No conclusion was reached on whether the server accepts or rejects them, and no bugs were opened for them. Backend password-strength validation and actual email recovery remain unverified.
-- No additional profiles were created because of the deletion failure. No recovery emails, payments or orders were submitted.
+- During this original registration/public-smoke stage, no additional profiles, recovery emails or orders were submitted. The later explicitly authorized demo used one additional synthetic buyer and two demo orders; see [demo-tests.md](demo-tests.md).
 
 ## Catalog and coupons
 

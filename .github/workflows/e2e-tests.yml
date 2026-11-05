@@ -26,6 +26,8 @@ env:
   # Synthetic account mutations are never part of automatic CI.
   RUN_ACCOUNT_TESTS: "0"
   CREATE_SYNTHETIC_ACCOUNT: "0"
+  RUN_DEMO_TESTS: "0"
+  AUTHORIZE_DEMO_CHECKOUT: "0"
 
 jobs:
   quality:

@@ -4,7 +4,7 @@
 
 ## Executed scope
 
-2026-11-05 UTC, Playwright 1.64.1. No real personal data, no new accounts during the expansion, no payments or orders. A single authorized synthetic account was reused, and no other people's data was accessed.
+Original privacy-smoke stage through 2026-11-05 02:09 UTC, Playwright 1.64.1: no real personal data, no additional accounts and no orders at that stage. A single authorized synthetic account was reused, and no other people's data was accessed.
 
 | Technical control         | Observed evidence                                                       | Result / limit                                                                                                                   |
 | ------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -28,6 +28,12 @@
 - `tests/account/journey.spec.ts`: synthetic-data export and deletion, with effective credential checking after DELETE.
 - `tests/integration/access-control.spec.ts`: guest blocking on specific endpoints and routes.
 
+## Later authorized demo evidence
+
+The user subsequently authorized one additional synthetic buyer and bounded demo orders, separate from the original no-order journeys. Two orders were created using only the published demo cards; the buyer's export still omitted existing orders. Buyer deletion still allowed fresh-cookie login. A cross-role buyer update against the owned seller's product was rejected with 403; guest order access redirected to login.
+
+Both carts were emptied, listing restored to Draft and marketing disabled. Both synthetic profiles, shop/draft and order history now require environment-owner cleanup due to the erasure defect. IDs and credentials remain only in ignored private ledgers. This extension remains technical smoke evidence, not GDPR validation or legal advice. See [demo-tests.md](demo-tests.md).
+
 ## What this smoke test does NOT demonstrate
 
 - Absolute absence of tracking, fingerprinting, custom analytics, delayed events, unrecognized destinations or data transfers. Observation is limited to the journey and execution period, not continuous capture of the entire application.
@@ -38,6 +44,6 @@
 
 ## Cleanup and team actions
 
-The synthetic profile was restored, marketing withdrawn, and cart contents and addresses removed. The download was deleted. **The account remains because of the deletion failure and must be manually removed by the environment owner**; the recovery ledger exists only in `.auth/owned-account.json`, ignored by Git.
+The synthetic profile was restored, marketing withdrawn, and cart contents and addresses removed. The download was deleted. **The original account remains because of the deletion failure and must be manually removed by the environment owner**; the recovery ledger exists only in `.auth/owned-account.json`, ignored by Git.
 
 Prioritize CAS-001, CAS-004, CAS-007 and CAS-009; verify fixes using the tests and internally compare the published policy with actual processes. The delivery reports a technical privacy smoke test, not legal validation or compliance certification.

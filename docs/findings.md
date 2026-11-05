@@ -12,11 +12,11 @@
 
 Local evidence: `playwright-report/index.html`, `test-results/results.json` and each failed test's folder (screenshot, video, trace for UI). Not versioned for privacy. The catalog is shared and may change; retain the execution date and evidence rather than assuming immutable data.
 
-Priorities are proposals. No root cause is confirmed: only the deployed application was observed. The fourteen findings were published as [issues #1–#14](https://github.com/Greynner/CASAutomotive-smoke-tests/issues); each issue number matches the CAS suffix. No artifacts or credentials were published.
+Priorities are proposals. No root cause is confirmed: only the deployed application was observed. The seventeen findings were published as [issues #1–#17](https://github.com/Greynner/CASAutomotive-smoke-tests/issues); each issue number matches the CAS suffix. No artifacts or credentials were published.
 
 ### Authenticated expansion
 
-- User authorization: create synthetic accounts; **do not submit payments or orders**.
+- Original authorization at this stage: create synthetic accounts; **do not submit payments or orders**. A later, separate authorization enabled only the bounded demo extension below; the legacy account tests retain their no-order guard.
 - A single `@example.com` account was created, with marketing disabled, and reused to avoid accumulating accounts while deletion fails.
 - `bun run test:account` execution: **2026-11-05 01:04 UTC**, Chromium, one worker, 118.3 s. One journey with soft assertions reproduced four additional discrepancies (CAS-007–CAS-010). They are not interpreted as a single bug merely because they share a test.
 - Final journey validation: **2026-11-05 01:13 UTC**, 143.6 s; reproduced the same four discrepancies, completed cart/address cleanup and again demonstrated successful login after deletion. It also verified HTTP 401 rejection for an incorrect password.
@@ -46,24 +46,38 @@ Priorities are proposals. No root cause is confirmed: only the deployed applicat
 - Axe on five pages × three engines reproduced only `color-contrast` among the selected rules (15 failed executions grouped under CAS-014). This is not a full WCAG audit.
 - Negative registration: 15 passing executions with the backend blocked for safety. Checks empty fields/agreement/confirmation; does not demonstrate server-side password-strength or email validation. Exploratory non-empty weak or malformed inputs were sent to the backend; blocking submission prevents concluding whether the server rejects them. No confirmed bug was reported.
 
+### Later authorized demo extension
+
+- The user subsequently authorized synthetic demo orders, cancellation and seller flows. Checkout explicitly states **“No real payments are taken”** and publishes approved/declined/insufficient-funds test cards. The frontend submits to same-origin `/api/checkout`; no external payment SDK was found in inspected bundles. Backend/gateway isolation is not independently proven.
+- One additional synthetic buyer account was created. The existing owned account became the seller; one labeled synthetic shop and $5 listing were prepared. No other users' resources were touched.
+- Bounded budget: **four checkout submissions**, exactly **two HTTP 402 declines** and **two HTTP 201 approvals**. Stock stayed 3 after both declines. Exactly two owned orders appeared; one was cancelled and one shipped/delivered with fake tracking. Successful/declined checkout outcomes were never resubmitted.
+- The first approval's redirect exceeded an exploration assertion timeout. Its ID and unique product were verified against the same buyer's order list/detail before continuing; no duplicate was created. Later probe/selector interruptions were resolved without resetting the checkout budget.
+- Final opt-in Playwright validation: **2026-11-05 03:55 UTC**, **101.4 s**, one bounded journey completed with findings. It reused persisted checkout checkpoints, rather than submitting four more requests. Failures map to CAS-015–CAS-017 and existing CAS-007/CAS-009; no transport/selector failure remained in this final validation.
+- Guest order access redirected to login. The buyer's update attempt against the other owned account's seller product was rejected with **403**. This is one concrete cross-role check, not an exhaustive IDOR audit.
+- Return eligibility was **30 calendar days** after the displayed delivery date. The policy link was valid, but no return-request/refund-processing control was exposed; actual return processing was not claimed and no undocumented endpoint was invoked.
+- Cleanup: one Cancelled and one Delivered demo order retained, both carts empty, listing Draft, marketing disabled. Buyer deletion still allowed login (CAS-007). Both profiles, the shop/draft and order history require environment-owner cleanup; IDs and credentials remain in ignored ledgers. See [demo-tests.md](demo-tests.md).
+
 ## Prioritized summary
 
-| ID      | Priority  | Discrepancy                                              | Impact                                         |
-| ------- | --------- | -------------------------------------------------------- | ---------------------------------------------- |
-| CAS-001 | P1 high   | Marketing enabled by default                             | Consent risk and policy contradiction          |
-| CAS-002 | P1 high   | Variant surcharge not reflected in price                 | Potentially misleading displayed price         |
-| CAS-003 | P2 medium | Inflated discount percentages                            | Incorrect commercial information               |
-| CAS-004 | P2 medium | Cookie rejection does not persist                        | Rejection choice not remembered                |
-| CAS-005 | P2 medium | Terms of service return 404                              | Terms unavailable before registration          |
-| CAS-006 | P2 medium | Sorting uses an order inconsistent with displayed prices | Makes product comparison and selection harder  |
-| CAS-007 | P1 high   | Account deletion does not prevent logging in again       | Retention and access risk after deletion       |
-| CAS-008 | P2 medium | Shipping charged at exactly $50                          | Estimated total exceeds the published amount   |
-| CAS-009 | P1 high   | Export omits a saved address                             | Incomplete access/portability data             |
-| CAS-010 | P1 high   | Tax calculated before discount                           | Incorrect estimated total in cart and checkout |
-| CAS-011 | P2 medium | Star thresholds lack distinguishable accessible names    | Makes screen-reader use harder                 |
-| CAS-012 | P2 medium | Maximum price excludes the exact boundary                | Omits products within budget                   |
-| CAS-013 | P1 high   | SAVE20 persists below its minimum                        | Active coupon without meeting eligibility      |
-| CAS-014 | P2 medium | Insufficient contrast in shared controls                 | Makes reading harder for users with low vision |
+| ID      | Priority  | Discrepancy                                              | Impact                                               |
+| ------- | --------- | -------------------------------------------------------- | ---------------------------------------------------- |
+| CAS-001 | P1 high   | Marketing enabled by default                             | Consent risk and policy contradiction                |
+| CAS-002 | P1 high   | Variant surcharge not reflected in price                 | Potentially misleading displayed price               |
+| CAS-003 | P2 medium | Inflated discount percentages                            | Incorrect commercial information                     |
+| CAS-004 | P2 medium | Cookie rejection does not persist                        | Rejection choice not remembered                      |
+| CAS-005 | P2 medium | Terms of service return 404                              | Terms unavailable before registration                |
+| CAS-006 | P2 medium | Sorting uses an order inconsistent with displayed prices | Makes product comparison and selection harder        |
+| CAS-007 | P1 high   | Account deletion does not prevent logging in again       | Retention and access risk after deletion             |
+| CAS-008 | P2 medium | Shipping charged at exactly $50                          | Estimated total exceeds the published amount         |
+| CAS-009 | P1 high   | Export omits a saved address                             | Incomplete access/portability data                   |
+| CAS-010 | P1 high   | Tax calculated before discount                           | Incorrect estimated total in cart and checkout       |
+| CAS-011 | P2 medium | Star thresholds lack distinguishable accessible names    | Makes screen-reader use harder                       |
+| CAS-012 | P2 medium | Maximum price excludes the exact boundary                | Omits products within budget                         |
+| CAS-013 | P1 high   | SAVE20 persists below its minimum                        | Active coupon without meeting eligibility            |
+| CAS-014 | P2 medium | Insufficient contrast in shared controls                 | Makes reading harder for users with low vision       |
+| CAS-015 | P1 high   | Cancellation does not restore stock                      | Inventory remains consumed after cancellation        |
+| CAS-016 | P2 medium | Cancelled orders inflate seller KPIs                     | Revenue/order/unit metrics include cancelled sales   |
+| CAS-017 | P1 high   | Seller fee includes shipping/tax                         | Earnings are lower than the published item-only rule |
 
 ## CAS-001 · Preselected marketing
 
@@ -214,6 +228,8 @@ Test: `tests/ui/catalog.spec.ts`. Evidence: received arrays of cents versus expe
 
 **Actual:** JSON with keys `exportedAt`, `profile`, `marketingConsent`, `reviews`, `shop`; it contains neither `addresses`, `orders` nor the saved synthetic address. Absence of the existing address demonstrates omitted data; no orders were created, so export of existing orders was not checked.
 
+**Later demo evidence:** after two owned synthetic orders were created, the buyer's export still omitted an `orders` array. Existing-order export is now concretely covered; the original address-omission reproduction remains valid.
+
 **Impact:** the published access/portability feature delivers incomplete data. Privacy review required. The JSON was not attached to GitHub.
 
 **Reproduction:** `bun run test:account`, step “export includes a saved synthetic address”. The test deletes the download and removes the address afterward.
@@ -228,7 +244,7 @@ Test: `tests/ui/catalog.spec.ts`. Evidence: received arrays of cents versus expe
 
 **Actual:** cart and checkout show tax of **$4.00**; the cart total is **$54.99**. Difference of $0.40. The coupon does apply, and $5.99 shipping is correct with a discounted subtotal of $45.
 
-**Impact:** displayed total exceeds the amount defined by the published tax rule. Actual charging was not verified because no orders were submitted.
+**Impact:** displayed total exceeds the amount defined by the published tax rule. Actual charging was not verified; this earlier reproduction stopped before order submission. The later demo used undiscounted synthetic orders and does not establish real settlement behavior.
 
 **Reproduction:** `bun run test:account`, steps “tax on discounted merchandise” and “checkout preview”.
 
@@ -285,6 +301,51 @@ Test: `tests/ui/catalog.spec.ts`. Evidence: received arrays of cents versus expe
 
 **Reproduction:** `bunx playwright test --project=frontend-chromium --grep 'automated accessibility'`. Test: `tests/ui/axe-smoke.spec.ts`. Fifteen executions (five pages × three engines) detected `color-contrast`; incomplete results require human review. This does not constitute WCAG certification.
 
+## CAS-015 · Processing cancellation does not restore stock · P1 high
+
+1. Prepare an owned synthetic listing with stock 3 and price $5.
+2. Buy one unit using the published approved demo card: stock becomes 2.
+3. Cancel the owned Processing order and confirm persisted status Cancelled.
+4. Reopen the seller listing editor and read stock.
+
+**Expected:** stock returns to 3; `/help#orders` promises cancelled items go back into stock.
+
+**Actual:** stock remains **2**. After another approved order was delivered, stock was **1**, rather than the expected **2** for one cancelled and one delivered unit.
+
+**Impact:** cancellation incorrectly consumes inventory. No real goods or bank charges were involved.
+
+**Evidence:** controlled execution observed 3 → 2 → cancel → 2; final `tests/demo/marketplace-demo.spec.ts` independently read inconsistent remaining stock from the owned seller editor.
+
+## CAS-016 · Cancelled orders remain in seller revenue/order/unit KPIs · P2 medium
+
+1. Start with a fresh owned shop and no previous sales.
+2. Place and cancel a $5 demo order, then inspect dashboard KPIs.
+3. Compare again after another $5 order is delivered.
+
+**Expected:** `/help#selling` excludes cancelled orders. After cancellation only: **$0 revenue / 0 orders / 0 units**. After one cancelled and one delivered order: **$5 / 1 / 1**.
+
+**Actual:** after cancellation only: **$5 / 1 / 1**. After the second delivery: **$10 / 2 / 2**. The cancelled row's own fee/earnings are zero, but gross KPIs still count it.
+
+**Impact:** seller metrics overstate non-cancelled business. Average order value is not claimed incorrect because both test items had the same price.
+
+**Evidence:** dashboard observations and final assertions in `tests/demo/marketplace-demo.spec.ts`; all resources belong to the two authorized synthetic roles.
+
+## CAS-017 · Marketplace fee includes shipping and tax · P1 high
+
+1. Place an approved demo order for one owned $5 item.
+2. Standard shipping is $5.99, tax $0.40, total $11.39.
+3. Inspect the seller order fee/earnings and dashboard net.
+
+**Expected:** `/help#selling` charges **10% of item sales only**, excluding shipping/tax: fee **$0.50**, seller net **$4.50**.
+
+**Actual:** fee **$1.14**, earnings **$3.86**. This equals rounded 10% of the $11.39 grand total—an observed relationship, not a confirmed backend root cause. Dashboard net also shows $3.86.
+
+**Impact:** seller earnings are understated relative to the published contract. This is a demo calculation, not proof of a real bank transfer or settlement.
+
+**Evidence:** seller order row and final `tests/demo/marketplace-demo.spec.ts` assertions. The cancelled order correctly shows $0 fee/$0 earnings; this defect is demonstrated on the Delivered order.
+
+**Safe replay for CAS-015–CAS-017:** `AUTHORIZE_DEMO_CHECKOUT=1 bun run test:demo` requires explicitly prepared owned fixtures. The completed ledger intentionally refuses reruns; do not reset counters or create replacement orders blindly. See [demo-tests.md](demo-tests.md).
+
 ## Recommendation
 
-Prioritize account deletion, complete export, marketing consent, tax calculation and variant-price consistency; then the shipping boundary, discounts, rejection persistence, terms and sorting. Rerun linked tests after each fix and complete the authenticated flows in [test-plan.md](test-plan.md) before recommending a release. Keep this set manageable so its impact, evidence and limits can be explained during the interview.
+Prioritize stock restoration, item-only seller fees, account deletion, complete export, marketing consent, tax calculation and variant-price consistency; then the shipping boundary, discounts, rejection persistence, terms and sorting. Rerun linked tests after each fix and complete the authenticated flows in [test-plan.md](test-plan.md) before recommending a release. Keep this set manageable so its impact, evidence and limits can be explained during the interview.

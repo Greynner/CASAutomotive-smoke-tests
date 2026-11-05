@@ -12,14 +12,20 @@ There is no application build/deployment job because this repository does not co
 
 | Layer                   | Runner and boundary                                                           | Coverage                                                                                                                     | Current deterministic result                                         |
 | ----------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Unit                    | Bun; pure utility public functions                                            | USD parsing, safe cents, origin validation, allowed/denied requests, synthetic-ledger ownership                              | **75 passing tests**                                                 |
+| Unit                    | Bun; pure utility public functions                                            | USD parsing, safe cents, ownership/request policies, demo payload/budgets and cross-process locking                          | **140 passing tests**                                                |
 | Local integration       | Playwright Chromium + per-test Node HTTP server on an ephemeral loopback port | Page Object → HTTP mutation → persisted fixture render; error propagation; currency parsing; production browser guard wiring | **10 passing tests**                                                 |
 | Live API integration    | Playwright request fixture → deployed QA                                      | 17 route, status, guest-access and redirect checks                                                                           | Historical live results in findings; genuine defects remain failures |
 | Live browser regression | Chromium, Firefox, WebKit, emulated iPhone/Android → deployed QA              | 115 desktop/mobile executions; functional, accessibility and technical privacy smoke                                         | Historical live results in findings; not a release approval          |
 | Authenticated journeys  | Explicit opt-in; locally owned synthetic account only                         | Two journeys covering profile/preferences, coupons/cart, export and deletion                                                 | Not automatic CI; known product defects documented                   |
 | Observational baseline  | One client, sequential navigation                                             | Timings and selected response-header observations                                                                            | No load-test or SLA claim                                            |
 
-The 17 live API checks plus 115 browser executions form the **132-execution public live matrix**. The 75 unit tests and 10 local integration tests are additional, separate layers. Do not combine their coverage percentages with application coverage or add repeated historical runs as unique test cases.
+The 17 live API checks plus 115 browser executions form the **132-execution public live matrix**. The 140 unit tests and 10 local integration tests are additional, separate layers. Do not combine their coverage percentages with application coverage or add repeated historical runs as unique test cases.
+
+## Later bounded demo layer
+
+The user later authorized a separate demo-only order workflow, documented in [demo-tests.md](demo-tests.md). It made four allowlisted submissions (two 402/two 201), retained exactly two owned orders (Cancelled/Delivered), and completed a private checkpoint-reusing validation. It is not part of the 132-execution public matrix or automatic CI. Returns cover the visible 30-day eligibility/policy only; no online refund processor was exposed.
+
+The legacy account guard still denies order/payment/seller writes. A separate demo policy gates explicit authorization, exact cards/synthetic payloads, resource IDs and attempt/order caps. Unit tests cover those rules and a cross-process filesystem lock; live demo outcomes are not mislabeled as unit tests. Post-run hardening was validated offline without resetting the completed journal or placing more orders.
 
 ## Why the local integration suite is not a pretend application test
 
@@ -34,7 +40,7 @@ It lets us verify automation behavior deterministically:
 5. The production browser guard allows a read but prevents out-of-origin writes from reaching the local server. Diagnostics verify that no POST reached transport.
 6. A configured unauthorized origin is rejected before route installation.
 
-The pure policy additionally tests allowed QA-origin writes and prohibited order/payment/reset/seller writes without sending them anywhere. Integration tests never contact the QA site, read `.auth/`, register users or submit orders.
+The legacy pure policy additionally tests allowed QA-origin writes and prohibited order/payment/reset/seller writes without sending them anywhere. Separate unit tests cover the later explicit demo policy, including tight operation caps and denial of unexposed return endpoints. Integration tests never contact the QA site, read `.auth/`, register users or submit orders.
 
 ## SDLC evidence map
 
@@ -61,14 +67,16 @@ These are automation-code improvements, **not fixes to the remote marketplace**.
 
 ## Coverage and static checks
 
-`bun run test:unit:coverage` produces text and LCOV output. `bunfig.toml` enforces at least **90% lines and functions**. The current suite reaches **100% lines/functions for the two exercised modules**:
+`bun run test:unit:coverage` produces text and LCOV output. `bunfig.toml` enforces at least **90% lines and functions**. The current suite reaches **100% lines/functions for the four exercised modules**:
 
 - `src/e2e-tests/support/marketplace.ts`
 - `src/e2e-tests/support/account-policy.ts`
+- `src/e2e-tests/support/demo-policy.ts`
+- `src/e2e-tests/support/demo-lock.ts`
 
 Bun's report covers modules loaded by this unit suite. It is not coverage of the whole automation tree, Page Objects, remote application, database or privacy processes. No branch-coverage percentage is claimed.
 
-The coverage gate was also tested negatively: running only the order-blocking case produced 31.48% lines and 33.33% functions and exited with status 1, despite the selected assertion passing. The complete 75-test run exits successfully.
+The coverage gate was also tested negatively: running only the order-blocking case produced 31.48% lines and 33.33% functions and exited with status 1, despite the selected assertion passing. The complete 140-test run exits successfully.
 
 TypeScript checks project source in strict/no-emit mode, including scripts and both new test layers. `skipLibCheck` skips incompatible third-party declaration checking for the pinned Bun/Node type combination; it does not disable checking of project/test source. Bun runtime and Bun types are pinned to 1.3.6. Biome checks formatting and recommended lint rules.
 
@@ -86,7 +94,7 @@ The overall workflow still fails when the live site fails. There is no `continue
 
 The reusable `.github/actions/setup/action.yml` pins Bun, restores its dependency cache and installs from the frozen lockfile. The workflow has read-only repository permissions, cancellation of superseded runs and timeouts. No credentials are needed for automatic jobs.
 
-Unit coverage/JUnit and local fixture reports are safe to upload automatically. Live-site artifacts require explicit manual opt-in because they may contain sensitive information. All configured artifacts expire after seven days. Authenticated account creation and journeys are disabled in automatic CI.
+Unit coverage/JUnit and local fixture reports are safe to upload automatically. Live-site artifacts require explicit manual opt-in because they may contain sensitive information. All configured artifacts expire after seven days. Authenticated account creation, legacy journeys and demo orders are disabled in automatic CI. The demo config also rejects any CI execution explicitly.
 
 ## Commands and reporting
 
