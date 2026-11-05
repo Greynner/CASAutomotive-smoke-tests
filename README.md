@@ -2,8 +2,6 @@
 
 A risk-based QA project for [the MarketNest QA marketplace](https://qa-marketplace-app-b9mpo.ondigitalocean.app/). It combines **Bun, TypeScript, Playwright, axe and GitHub Actions** to find reproducible defects, preserve evidence and explain release risks.
 
-The structure is adapted from `Creai-homepage-smoke-tests`; site-specific selectors, contracts and safety controls were rewritten for MarketNest. No credentials or generated artifacts were copied from the reference repository.
-
 **Start here:** [Executive report](docs/final-report.md) · [14 reported findings](https://github.com/Greynner/CASAutomotive-smoke-tests/issues) · [Testing strategy and SDLC traceability](docs/testing-strategy.md).
 
 > This repository contains the automation project, **not the marketplace application's source code**. Unit coverage applies to our automation utilities. Local integration tests exercise our adapters against a controlled HTTP fixture. Live API and browser tests exercise the deployed marketplace. These layers must not be presented as unit coverage of the application's internals or complete SDLC certification.
